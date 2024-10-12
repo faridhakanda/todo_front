@@ -1,101 +1,208 @@
+'use client'
 import Image from "next/image";
-
+import { useState, useEffect } from 'react'
+import axios from 'axios'
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  // todo post method code
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [todos, setTodos] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const [isEditing, setEditing] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  
+  // submit a new todo
+  //  todo post or create function code
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const newTodo = {
+      todo_title: title,
+      todo_description: description
+    };
+    const url = "http://127.0.0.1:8000/todo_class/";
+    try {
+      const response = await axios.post(url, newTodo);
+      console.log('Todo created successfully: ', response.data);
+      // Prepend the new todo and reverse the list to maintain reverse order
+      //setTodos((prevTodos) => [...prevTodos, response.data]);
+      setTodos((prevTodos) => [response.data, ...prevTodos]);
+      setTitle('');
+      setDescription('');
+    } catch(error) {
+      console.error('There was an error creating the todo!', error);
+    }
+  };
+  
+  // for delete any of todo item
+  // delete todo item
+  const handleDelete = async(id) => {
+    const url = `http://127.0.0.1:8000/todo_class/${id}/`;
+    try {
+      await axios.delete(url);
+      setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
+      console.log('Todo Deleted successfully!');
+    } catch(error) {
+      console.error('There was an error deleting the todo!', error);
+    }
+  };
+
+  // Trigger edit mode
+  const handleEdit = (todo) => {
+    setEditing(todo.id);
+    setEditTitle(todo.todo_title);
+    setEditDescription(todo.todo_description);
+  };
+  
+  const handleUpdate = async(id) => {
+    const updatedTodo = {
+      todo_title: editTitle,
+      todo_description: editDescription,
+    };
+    const url = `http://127.0.0.1:8000/todo_class/${id}/`;
+    try {
+      const response = await axios.put(url, updatedTodo);
+      setTodos((prevTodos) =>
+        prevTodos.map((todo) => (todo.id === id ? response.data: todo))
+      );
+      console.log('Todo updated successfully: ', response.data);
+      setEditing(null);
+    } catch(error){
+      console.error('There was an error updating the todo!', error);
+    }
+  }
+  // handling update
+  //  this is the  previous code when update not work 
+  // here it's only update the default title, description which
+  // is given here
+  // const handleUpdate = async (id, updatedTitle, updatedDescription) => {
+  //   const updatedTodo = {
+  //     todo_title: updatedTitle,
+  //     todo_description: updatedDescription,
+  //   };
+  //   const url = `http://127.0.0.1:8000/todo_class/${id}/`;
+  //   try {
+  //     const response = await axios.put(url, updatedTodo);
+  //     setTodos((prevTodos) => 
+  //       prevTodos.map((todo) =>
+  //         todo.id === id ? response.data : todo
+  //       )
+  //     );
+  //     console.log('Todo updated successfully: ', response.data);
+  //   } catch(error) {
+  //     console.error('There was an error updating the todo!', error);
+  //   }
+  // };
+
+  // todo get method code 
+  useEffect(() => {
+    const fetchTodos = async () => {
+      try {
+        const response = await axios.get("http://127.0.0.1:8000/todo_class/");
+        // i add here reverse order 
+        //setTodos(response.data);
+        setTodos(response.data.reverse());
+        setLoading(false);
+      } catch(error) {
+        console.error('There was an error fetching the todos!', error);
+        setLoading(false);
+      }
+    };
+    fetchTodos();
+  }, []);
+  
+  // this the main display board for todo
+  return (
+    <div className="flex justify-center text-center mx-auto p-2">
+      <main>
+        <h1 className="2xl:bg-zinc-50 2xl:shadow-lg">Nextjs and Django Todo Application!</h1>
+        {/* here is the form panel for todo application */}
+        <div className="bg-slate-100 p-2 text-center text-2xl rounded-md">
+          <h1>Todo Input Panel!</h1>
+          <div className="flex justify-center">
+            <form onSubmit={handleSubmit}>
+              <input 
+                className="flex p-2 m-1 rounded-md bg-blue-100 text-slate-900"
+                type="text"
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter your todo title..."
+                required
+              />
+              <input 
+                className="flex p-2 m-1 rounded-md bg-blue-100 text-slate-900"
+                type="text"
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Enter your todo description..."
+                required
+              />
+              <button type="submit">Todo Add!</button>
+            </form>
+          </div> 
+        </div>
+        {/* here is the get panel and update delete option */}
+        <div className="flex  mx-auto">
+          <div className="bg-blue-300 p-2 justify-center mx-auto">
+            <h1 className="p-2 text-xl">Todo Item!</h1>
+            {loading ? (
+              <p className="text-slate-950 p-2">Loading...</p>
+            ) : (
+              <div className="bg-blue-100 justify-center mx-auto p-2 m-1">
+                {todos.map(todo => (
+                  <div className="p-2 m-1 bg-lime-200 flex list-none justify-center text-start">
+                    <li className="flex-col" key={todo.id}>
+                      {/* this code adding for updating the todo */}
+                      {isEditing === todo.id ? (
+                        // edit mode : show inputs for editing title and descripption
+                        <div className="flex-col justify-center mx-auto">
+                          <div className="flex-col">
+                            <input 
+                              className="flex p-2 m-1 rounded-md"
+                              type="text"
+                              value={editTitle}
+                              onChange={(e) => setEditTitle(e.target.value)}
+                              placeholder="Editing the title again..."
+                            />
+                            <textarea
+                              className="flex p-2 m-1 rounded-md"
+                              value={editDescription}
+                              onChange={(e) => setEditDescription(e.target.value)}
+                            />
+                          </div>
+                          
+                          <div className="flex gap-2 justify-center">
+                            <button className="bg-lime-500 p-1 rounded-md" onClick={() => handleUpdate(todo.id)}>Save</button>
+                            <button className="bg-red-500 p-1 rounded-md" onClick={() => setEditing(null)}>Cancel</button>
+                          </div>
+                          
+                         
+                        </div>
+                      ) : (
+                        // view mode show todo details
+                        <div className="flex-col justify-center mx-auto">
+                          <div className="flex-col justify-center mx-auto">
+                            <h1 className="bg-indigo-200 p-2 m-1 rounded-md">{todo.todo_title}</h1>
+                            <p className="bg-violet-200 p-2 m-1 rounded-md">{todo.todo_description}</p>
+                          </div>
+                          <div className="flex justify-center text-center mx-auto">
+                            <button className="bg-lime-600 p-2 m-1 rounded-md" onClick={() => handleEdit(todo)}>Edit</button>
+                            <button className="bg-red-600 p-2 m-1 rounded-md" onClick={() => handleDelete(todo.id)}>Delete</button>
+                          </div>
+                        </div>
+                      )}
+                    </li>
+                  </div>   
+                ))}
+              </div>
+            )} 
+          </div>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
