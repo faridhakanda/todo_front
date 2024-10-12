@@ -73,30 +73,7 @@ export default function Home() {
       console.error('There was an error updating the todo!', error);
     }
   }
-  // handling update
-  //  this is the  previous code when update not work 
-  // here it's only update the default title, description which
-  // is given here
-  // const handleUpdate = async (id, updatedTitle, updatedDescription) => {
-  //   const updatedTodo = {
-  //     todo_title: updatedTitle,
-  //     todo_description: updatedDescription,
-  //   };
-  //   const url = `http://127.0.0.1:8000/todo_class/${id}/`;
-  //   try {
-  //     const response = await axios.put(url, updatedTodo);
-  //     setTodos((prevTodos) => 
-  //       prevTodos.map((todo) =>
-  //         todo.id === id ? response.data : todo
-  //       )
-  //     );
-  //     console.log('Todo updated successfully: ', response.data);
-  //   } catch(error) {
-  //     console.error('There was an error updating the todo!', error);
-  //   }
-  // };
-
-  // todo get method code 
+  
   useEffect(() => {
     const fetchTodos = async () => {
       try {
